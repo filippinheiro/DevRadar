@@ -1,12 +1,15 @@
 const axios = require('axios')
 const Dev = require('../models/Dev')
+const mongoose = require('mongoose');
 const parseStringAsArray = require('../utils/parseStringAsArray')
 
 module.exports = {
 
 
+
    async index(request, response) {
       const devs = await Dev.find()
+
       return response.json(devs)
    },
 
@@ -24,17 +27,29 @@ module.exports = {
 
       const dataToUpsert = {
          github_username,
-         techs: techs_array, 
+         techs: techs_array,
          location,
-         name, 
+         name,
          avatar_url, bio
       }
-      const filter = {github_username}
+
+      const filter = { github_username }
 
 
       const dev = await Dev.findOneAndUpdate(filter, dataToUpsert, {
          new: true,
          upsert: true,
+         useFindAndModify: false
+      })
+      return response.json(dev)
+   },
+
+
+   //TODO: implementar update apenas name, techs, location
+
+   async destroy(request, response) {
+      const id = mongoose.Types.ObjectId(request.params.id)
+      const dev = await Dev.findByIdAndRemove(id, {
          useFindAndModify: false
       })
       return response.json(dev)
