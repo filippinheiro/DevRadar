@@ -6,7 +6,8 @@ const routes = require('./src/routes')
 const app = express()
 mongoose.connect('mongodb+srv://filippinheiro:omnistack@radardev-4rmfn.gcp.mongodb.net/radardev?retryWrites=true&w=majority', {
    useNewUrlParser: true,
-   useUnifiedTopology: true
+   useUnifiedTopology: true,
+   useCreateIndex: true
 })
 
 app.use(express.json())
