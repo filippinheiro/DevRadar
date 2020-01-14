@@ -5,20 +5,18 @@ const parseStringAsArray = require('../utils/parseStringAsArray')
 
 module.exports = {
 
-
-
    async index(request, response) {
       const devs = await Dev.find()
 
       return response.json(devs)
    },
 
-
    async store(request, response) {
 
       const { github_username, techs, latitude, longitude } = request.body
       const api_response = await axios.get(`https://api.github.com/users/${github_username}`)
-      const { name = login, avatar_url, bio } = api_response.data
+      let { name , avatar_url, bio } = api_response.data
+      if(name === null) name = api_response.data.login
       const techs_array = parseStringAsArray(techs)
       const location = {
          type: 'Point',
@@ -44,14 +42,31 @@ module.exports = {
       return response.json(dev)
    },
 
-
-   //TODO: implementar update apenas name, techs, location
-
    async destroy(request, response) {
       const id = mongoose.Types.ObjectId(request.params.id)
       const dev = await Dev.findByIdAndRemove(id, {
          useFindAndModify: false
       })
       return response.json(dev)
+   },
+
+   async update(request, response) {
+
+      const id = mongoose.Types.ObjectId(request.params.id)
+      const {techs} = request.body
+
+      if(techs) {
+         const techs_array = parseStringAsArray(techs)
+         const dataToUpdate = {...request.body, techs: techs_array}
+      }
+
+      const dev = await Dev.findByIdAndUpdate(id, dataToUpdate, {
+         new: true,
+         useFindAndModify: false
+      })
+
+      return response.json(dev)
+
    }
+
 }
