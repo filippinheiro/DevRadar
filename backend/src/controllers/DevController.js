@@ -6,9 +6,10 @@ const parseStringAsArray = require('../utils/parseStringAsArray')
 module.exports = {
 
    async index(request, response) {
-      const devs = await Dev.find()
 
+      const devs = await Dev.find()
       return response.json(devs)
+
    },
 
    async store(request, response) {
@@ -53,14 +54,25 @@ module.exports = {
    async update(request, response) {
 
       const id = mongoose.Types.ObjectId(request.params.id)
-      const {techs} = request.body
+      let dev = await Dev.findById(id, {
+         useFindAndModify: false
+      })
 
-      if(techs) {
-         const techs_array = parseStringAsArray(techs)
-         const dataToUpdate = {...request.body, techs: techs_array}
+      if(!dev) return response.status(404).send('User not found')
+
+      const {
+         name = dev.name,
+         avatar_url = dev.avatar_url,
+         bio = dev.bio,
+      } = request.body
+
+      const techs = request.body.techs ? parseStringAsArray(request.body.techs) : dev.techs
+
+      const dataToUpdate = {
+         name, avatar_url, bio, techs
       }
 
-      const dev = await Dev.findByIdAndUpdate(id, dataToUpdate, {
+      dev = await Dev.findByIdAndUpdate(id, dataToUpdate, {
          new: true,
          useFindAndModify: false
       })
