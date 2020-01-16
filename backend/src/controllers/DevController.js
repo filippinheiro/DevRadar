@@ -1,46 +1,58 @@
 const axios = require('axios')
 const Dev = require('../models/Dev')
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt')
 const parseStringAsArray = require('../utils/parseStringAsArray')
 
 module.exports = {
 
    async index(request, response) {
-
       const devs = await Dev.find()
-      return response.json(devs)
-
+      return response.status(200).json(devs)
    },
 
    async store(request, response) {
+      const { github_username, techs, latitude, longitude, password } = request.body
+      try {
+         const api_response = await axios.get(`https://api.github.com/users/${github_username}`)
+         let { name, avatar_url, bio } = api_response.data
+         if (name === null) name = api_response.data.login
+         const techs_array = parseStringAsArray(techs)
 
-      const { github_username, techs, latitude, longitude } = request.body
-      const api_response = await axios.get(`https://api.github.com/users/${github_username}`)
-      let { name , avatar_url, bio } = api_response.data
-      if(name === null) name = api_response.data.login
-      const techs_array = parseStringAsArray(techs)
-      const location = {
-         type: 'Point',
-         coordinates: [longitude, latitude]
+         const location = {
+            type: 'Point',
+            coordinates: [longitude, latitude]
+         }
+
+         const filter = { github_username }
+
+         bcrypt.hash(password, 10, async (err, hash) => {
+
+            if (err) {
+               return response.status(500).json({ error: err })
+            } 
+
+            
+            const dataToUpsert = {
+               github_username,
+               techs: techs_array,
+               password: hash,
+               location,
+               name,
+               avatar_url, bio
+            }
+
+            const dev = await Dev.findOneAndUpdate(filter, dataToUpsert, {
+               new: true,
+               upsert: true,
+               useFindAndModify: false
+            })
+
+            return response.status(201).json(dev)
+         })
+      } catch {
+         return response.status(404).send('user not found on github')
       }
-
-      const dataToUpsert = {
-         github_username,
-         techs: techs_array,
-         location,
-         name,
-         avatar_url, bio
-      }
-
-      const filter = { github_username }
-
-
-      const dev = await Dev.findOneAndUpdate(filter, dataToUpsert, {
-         new: true,
-         upsert: true,
-         useFindAndModify: false
-      })
-      return response.json(dev)
    },
 
    async destroy(request, response) {
@@ -48,6 +60,7 @@ module.exports = {
       const dev = await Dev.findByIdAndRemove(id, {
          useFindAndModify: false
       })
+      if (!dev) return response.status(404).send('Id not found')
       return response.json(dev)
    },
 
@@ -58,7 +71,7 @@ module.exports = {
          useFindAndModify: false
       })
 
-      if(!dev) return response.status(404).send('User not found')
+      if (!dev) return response.status(404).send('User not found')
 
       const {
          name = dev.name,

@@ -6,7 +6,12 @@ const DevSchema = new mongoose.Schema({
    github_username: {
       type: String,
       immutable: true,
-      unique: true
+      unique: true,
+      required: true
+   },
+   password: {
+      type: String,
+      required: true
    },
    bio: String,
    avatar_url: String,
