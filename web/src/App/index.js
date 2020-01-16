@@ -4,34 +4,49 @@ import DevItem from '../components/DevItem'
 import '../global.css';
 import './styles.css'
 import api from '../services/api'
-import DevForm from '../components/DevForm';
+import '../components/LoginForm'
+import LoginForm from '../components/LoginForm';
 
 
 function App() {
 
   const [devs, setDevs] = useState([])
+  const [latitude, setLatitude] = useState('')
+  const [longitude, setLongitude] = useState('')
+
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords
+        setLatitude(latitude)
+        setLongitude(longitude)
+      },
+      err => {
+        console.log(err.message)
+      },
+      {
+        timeout: 30000,
+      }
+    )
+  }, [])
 
   useEffect(() => {
     async function loadDevs() {
-      const response = await api.get('/devs')
-      setDevs(response.data)
+      const response = await api.get(`nearSearch?latitude=${latitude}&longitude=${longitude}`)
+      setDevs(response.data.devs)
     }
     loadDevs()
-  }, [])
-
-  async function handleAddDev(data) {
-    const response = await api.post('/devs', data)
-    setDevs([...devs, response.data])
-  }
+  }, [latitude, longitude])
 
   return (
     <div id="app">
       <aside>
-        <strong>Cadastrar</strong>
-        <DevForm onSubmit={handleAddDev}/>
+        <strong>Entrar</strong>
+        <LoginForm/>
       </aside>
 
       <main>
+        <header id="title">Desenvolvedores próximos de você</header>
         <ul>
           {devs.map(dev => (
             <DevItem key={dev._id} dev={dev} />
