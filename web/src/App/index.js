@@ -32,11 +32,11 @@ function App() {
 
   useEffect(() => {
     async function loadDevs() {
-      const response = await api.get(`nearSearch?latitude=${latitude}&longitude=${longitude}`)
-      setDevs(response.data.devs)
+      const response = await api.get('/devs')
+      setDevs(response.data)
     }
     loadDevs()
-  }, [latitude, longitude])
+  }, [])
 
   return (
     <div id="app">

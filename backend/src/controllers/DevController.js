@@ -3,11 +3,23 @@ const Dev = require('../models/Dev')
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt')
 const parseStringAsArray = require('../utils/parseStringAsArray')
+const {findConnections, sendMessage} = require('../websocket')
+
 
 module.exports = {
 
    async index(request, response) {
-      const devs = await Dev.find()
+      const api_devs = await Dev.find()
+      const devs = api_devs.map(api_dev => ({
+         github_username: api_dev.github_username,
+         name: api_dev.name,
+         avatar_url: api_dev.avatar_url,
+         location: api_dev.location,
+         techs: api_dev.techs,
+         bio: api_dev.bio,
+         _id: api_dev._id,
+      })
+      )
       return response.status(200).json(devs)
    },
 
@@ -30,9 +42,9 @@ module.exports = {
 
             if (err) {
                return response.status(500).json({ error: err })
-            } 
+            }
 
-            
+
             const dataToUpsert = {
                github_username,
                techs: techs_array,
@@ -47,6 +59,13 @@ module.exports = {
                upsert: true,
                useFindAndModify: false
             })
+
+            const sendSocketMessageTo = findConnections(
+               {longitude, latitude},
+               techs_array
+            )
+
+            sendMessage(sendSocketMessageTo, 'new-dev', dev)
 
             return response.status(201).json(dev)
          })

@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios'
 
 const api: AxiosInstance = axios.create({
-   baseURL: 'https://dev-radar-omni.herokuapp.com/'
+   baseURL: 'http://192.168.1.103:3333'
 })
 
 export default api

@@ -4,10 +4,10 @@ const parseStringAsArray = require('../utils/parseStringAsArray')
 module.exports = {
 
    async index(request, response) {
-      const {latitude, longitude, techs} = request.query
+      const { latitude, longitude, techs } = request.query
       const techs_array = parseStringAsArray(techs)
-      
-      const devs = await Dev.find({
+
+      const api_devs = await Dev.find({
          techs: {
             $in: techs_array
          },
@@ -20,8 +20,19 @@ module.exports = {
                $maxDistance: 10000
             }
          }
-      }) 
+      })
 
-      return response.json({devs})
+      const devs = api_devs.map(api_dev => ({
+         github_username: api_dev.github_username,
+         name: api_dev.name,
+         avatar_url: api_dev.avatar_url,
+         location: api_dev.location,
+         techs: api_dev.techs,
+         bio: api_dev.bio,
+         _id: api_dev._id,
+      })
+      )
+
+      return response.json(devs)
    }
 }
