@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity } from 'react-native'
 import MapView, { Marker, Callout, Region } from 'react-native-maps'
-import { requestPermissionsAsync, getCurrentPositionAsync, LocationData } from 'expo-location'
+import { requestPermissionsAsync, getCurrentPositionAsync} from 'expo-location'
 import { MaterialIcons } from '@expo/vector-icons'
 
 import api from '../services/api'
+import { connect, disconnect } from '../services/socket'
 
 function Main({ navigation }): JSX.Element {
 
@@ -22,8 +23,8 @@ function Main({ navigation }): JSX.Element {
             setCurrentRegion({
                latitude,
                longitude,
-               latitudeDelta: 0.01,
-               longitudeDelta: 0.01
+               latitudeDelta: 0.04,
+               longitudeDelta: 0.04
             })
          }
       }
@@ -31,19 +32,6 @@ function Main({ navigation }): JSX.Element {
       loadInitialPosition()
    }, [])
 
-
-   useEffect(() => {
-      async function loadNearDevs(): Promise<void> {
-         const response = await api.get('/nearSearch', {
-            params: {
-               latitude: currentRegion.latitude,
-               longitude: currentRegion.longitude
-            }
-         })
-         setDevs(response.data.devs)
-      }
-      loadNearDevs()
-   }, [])
 
    if (!currentRegion) {
       return null
@@ -59,10 +47,12 @@ function Main({ navigation }): JSX.Element {
             techs
          }
       })
+      console.log('loading devs...')
       setDevs(response.data.devs)
    }
 
    function handleRegionChange(region: Region) {
+      console.log('Changing region...')
       setCurrentRegion(region)
    }
 
@@ -72,32 +62,35 @@ function Main({ navigation }): JSX.Element {
             style={styles.map}
             onRegionChangeComplete={handleRegionChange}
             initialRegion={currentRegion}>
-            {devs.map(dev => (
-               <Marker
-                  key={dev._id}
-                  coordinate={{
-                     latitude: dev.location.coordinates[1],
-                     longitude: dev.location.coordinates[0]
-                  }}>
-                  <Image source={{
-                     uri: dev.avatar_url
-                  }} style={styles.avatar} />
-                  <Callout onPress={() => {
-                     navigation.navigate('Profile', {
-                        github_username: dev.github_username
-                     })
-                  }}>
-                     <View style={styles.callout}>
-                        <Text style={styles.devMain}>{dev.name}</Text>
-                        <Text style={styles.bio}>{dev.bio}</Text>
-                        <Text style={styles.techs}>{dev.techs.join(', ')}</Text>
-                     </View>
-                  </Callout>
-               </Marker>
-            )
+            {devs.map(dev => {
+               console.log('Calling map')
+               return (
+                  <Marker
+                     key={dev._id}
+                     coordinate={{
+                        latitude: dev.location.coordinates[1],
+                        longitude: dev.location.coordinates[0]
+                     }}>
+                     <Image source={{
+                        uri: dev.avatar_url
+                     }} style={styles.avatar} />
+                     <Callout onPress={() => {
+                        navigation.navigate('Profile', {
+                           github_username: dev.github_username
+                        })
+                     }}>
+                        <View style={styles.callout}>
+                           <Text style={styles.devMain}>{dev.name}</Text>
+                           <Text style={styles.bio}>{dev.bio}</Text>
+                           <Text style={styles.techs}>{dev.techs.join(', ')}</Text>
+                        </View>
+                     </Callout>
+                  </Marker>
+               )
+            }
             )}
          </MapView>
-         <KeyboardAvoidingView style={styles.searchForm} behavior={Platform.OS === 'ios' ? 'padding' : null}>
+         <View style={styles.searchForm}>
             <TextInput
                style={styles.searchInput}
                placeholder="Buscar devs por tecnologias"
@@ -111,7 +104,7 @@ function Main({ navigation }): JSX.Element {
             }}>
                <MaterialIcons name="my-location" size={20} color={'#fff'} />
             </TouchableOpacity>
-         </KeyboardAvoidingView>
+         </View>
       </>
    )
 }
@@ -143,6 +136,7 @@ const styles = StyleSheet.create({
    },
    searchForm: {
       position: 'absolute',
+      top: 20,
       bottom: 20,
       left: 20,
       right: 20,
