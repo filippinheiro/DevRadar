@@ -48,7 +48,7 @@ function Main({ navigation }): JSX.Element {
          }
       })
       console.log('loading devs...')
-      setDevs(response.data.devs)
+      setDevs(response.data)
    }
 
    function handleRegionChange(region: Region) {
@@ -63,7 +63,6 @@ function Main({ navigation }): JSX.Element {
             onRegionChangeComplete={handleRegionChange}
             initialRegion={currentRegion}>
             {devs.map(dev => {
-               console.log('Calling map')
                return (
                   <Marker
                      key={dev._id}
