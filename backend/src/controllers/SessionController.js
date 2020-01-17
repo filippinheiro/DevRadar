@@ -7,7 +7,6 @@ module.exports = {
 
 
    async store(request, response) {
-      console.log('Trying to log in')
       const { github_username, password} = request.body
       const user = await Dev.findOne({ github_username }, {
          useFindAndModify: false
